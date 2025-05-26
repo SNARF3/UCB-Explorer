@@ -10,27 +10,53 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeIn;
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   bool _isChatOpen = false;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+    _animationController = AnimationController(
       vsync: this,
+      duration: const Duration(milliseconds: 300),
     );
-    _fadeIn = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-    _controller.forward();
+
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+    );
+
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutQuad,
+    ));
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _animationController.dispose();
     super.dispose();
+  }
+
+  void _toggleChat() {
+    setState(() {
+      _isChatOpen = !_isChatOpen;
+      if (_isChatOpen) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
   }
 
   @override
@@ -51,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen>
               width: double.infinity,
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('../../assets/images/banner.jpg'),
+                  image: AssetImage('lib/assets/images/banner.jpg'), // Ruta corregida
                   fit: BoxFit.contain,
                 ),
               ),
@@ -127,45 +153,57 @@ class _HomeScreenState extends State<HomeScreen>
             ],
           ),
           
-          // Chat Widget - Solución mejorada
-          if (_isChatOpen) ...[
-            GestureDetector(
-              onTap: () => setState(() => _isChatOpen = false),
-              behavior: HitTestBehavior.opaque,
+          // Chat Widget con animaciones
+          if (_isChatOpen)
+            Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.3),
-              ),
-            ),
-            Positioned(
-              right: 16,
-              bottom: 16,
-              child: Material(
-                borderRadius: BorderRadius.circular(16),
-                elevation: 8,
-                child: Container(
-                  width: screenWidth * 0.9,
-                  height: screenHeight * 0.6,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ChatWidget(
-                    onClose: () => setState(() => _isChatOpen = false),
+                child: Align(
+                  alignment: Alignment.bottomRight,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: FadeTransition(
+                        opacity: _opacityAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Material(
+                            borderRadius: BorderRadius.circular(16),
+                            elevation: 8,
+                            child: Container(
+                              margin: const EdgeInsets.only(top: 0), // Reduce el margen superior
+                              width: screenWidth * 0.9,
+                              height: screenHeight * 0.8, // Ajusta la altura si es necesario
+                              child: ChatWidget(
+                                onClose: _toggleChat,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ] else ...[
-            Positioned(
-              right: 16,
-              bottom: 16,
+          
+          // Botón de chat flotante
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return ScaleTransition(scale: animation, child: child);
+              },
               child: FloatingActionButton(
-                backgroundColor: Colors.white,
-                onPressed: () => setState(() => _isChatOpen = true),
-                child: const Icon(Icons.chat, color: Colors.blue, size: 30),
+                key: ValueKey<bool>(_isChatOpen),
+                backgroundColor: _isChatOpen ? Colors.red : Colors.blue,
+                onPressed: _toggleChat,
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
