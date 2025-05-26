@@ -40,7 +40,7 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
       setState(() {
         messages.add({
           'text':
-              'Hola como estas, bienvenido a UCB Explorer donde puedes preguntar cualquier cosa sobre la Universidad Católica Boliviana "San Pablo"',
+              ' 👋 Hola, ¿cómo estás? 🎓 Bienvenido a UCB Explorer, donde puedes preguntar cualquier cosa sobre la Universidad Católica Boliviana "San Pablo" 😊✨',
           'sender': 'bot',
           'time': '${DateTime.now().hour}:${DateTime.now().minute}'
         });
@@ -117,7 +117,7 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
                 const Icon(Icons.chat_bubble_outline, color: Colors.white),
                 const SizedBox(width: 8),
                 const Text(
-                  'UCB chatbot 💬',
+                  'UCB - Explorer 💬',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -125,9 +125,13 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
                   ),
                 ),
                 const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: _handleClose,
+                CircleAvatar(
+                  backgroundColor: const Color(0xFF003366), // Azul oscuro
+                  radius: 20, // Tamaño del círculo
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white), // Ícono blanco
+                    onPressed: _handleClose,
+                  ),
                 ),
               ],
             ),
@@ -179,7 +183,7 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
                                 message['text']!,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 15, // Aumenta el tamaño de la fuente
+                                  fontSize: 18, // Aumenta el tamaño de la fuente
                                 ),
                               ),
                               const SizedBox(height: 4),

@@ -41,7 +41,7 @@ class GeminiService {
       // --- MODIFICACIÓN CLAVE AQUÍ ---
       // Prepara el prompt con las instrucciones de contexto y idioma
       final String formattedPrompt = '''
-      Habla solo sobre la Universidad Católica Boliviana "San Pablo" (UCB). Debo brindar cualquier tipo de informacion, sobre sus carreras, todo, pued buscar en internet y asi proporcionar datos reales y actualizados, tambien debo usar emojis y hablar al usuario como si fuera mi mejor amigo .
+      Habla solo sobre la Universidad Católica Boliviana "San Pablo" (UCB). Debo brindar cualquier tipo de informacion, sobre sus carreras, todo, pued buscar en internet y asi proporcionar datos reales y actualizados, tambien debo usar emojis y hablar al usuario de la manera mas amable posible.
 
       Pregunta del usuario: "$prompt"
       ''';
