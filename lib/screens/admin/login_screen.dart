@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,16 +20,33 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      // Aquí deberías validar con tu backend/BD
-      if (_usuarioController.text == 'admin' &&
-          _contrasenaController.text == '1234') {
-        Navigator.pushReplacementNamed(context, '/admin-dashboard');
-      } else {
+      final String correo = _usuarioController.text.trim();
+      final String contrasenia = _contrasenaController.text.trim();
+
+      try {
+        final query =
+            await FirebaseFirestore.instance
+                .collection('admin')
+                .where('correo', isEqualTo: correo)
+                .where('contrasenia', isEqualTo: contrasenia)
+                .get();
+
+        if (query.docs.isNotEmpty) {
+          Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Credenciales incorrectas'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Credenciales incorrectas'),
+          SnackBar(
+            content: Text('Error al conectar con Firestore: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -64,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _usuarioController,
                   style: const TextStyle(color: Colors.white),
-                  decoration: _inputDecoration('Usuario', Icons.person),
+                  decoration: _inputDecoration('Correo', Icons.person),
                   validator:
                       (value) =>
                           value == null || value.isEmpty
