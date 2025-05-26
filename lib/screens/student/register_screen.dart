@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // <-- Añade esta línea
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,6 +15,38 @@ class _RegisterScreenState extends State<RegisterScreen>
   late AnimationController _controller;
   late Animation<double> _animation;
   String? _selectedColegio;
+  String? _selectedCarrera;
+
+  // Lista de carreras de la Universidad Católica Boliviana San Pablo
+  final List<String> _carreras = [
+    'Administración de Empresas',
+    'Arquitectura',
+    'Ciencias de la Computación',
+    'Comunicación Social',
+    'Contaduría Pública',
+    'Derecho',
+    'Diseño Gráfico',
+    'Economía',
+    'Educación',
+    'Enfermería',
+    'Filosofía y Letras',
+    'Finanzas',
+    'Ingeniería Ambiental',
+    'Ingeniería Civil',
+    'Ingeniería Comercial',
+    'Ingeniería de Sistemas',
+    'Ingeniería Electrónica',
+    'Ingeniería Industrial',
+    'Ingeniería Mecatrónica',
+    'Ingeniería Química',
+    'Ingeniería en Telecomunicaciones',
+    'Marketing y Publicidad',
+    'Medicina',
+    'Psicología',
+    'Relaciones Internacionales',
+    'Turismo',
+    // Puedes agregar más carreras si es necesario
+  ];
 
   final List<String> _colegios = [
     'Colegio San Calixto',
@@ -48,6 +81,12 @@ class _RegisterScreenState extends State<RegisterScreen>
     'Colegio San Juan',
   ];
 
+  // Controladores para los campos de texto
+  final TextEditingController _nombresController = TextEditingController();
+  final TextEditingController _apellidosController = TextEditingController();
+  final TextEditingController _telefonoController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +101,10 @@ class _RegisterScreenState extends State<RegisterScreen>
   @override
   void dispose() {
     _controller.dispose();
+    _nombresController.dispose();
+    _apellidosController.dispose();
+    _telefonoController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -72,7 +115,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false, // <--- Agrega esta línea
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.login, color: Color(0xFFFFD700)),
@@ -103,7 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Image.asset(
-                        'lib/assets/images/UCB.png', // Ruta corregida, sin ../ y sin barra inicial
+                        'lib/assets/images/UCB.png',
                         height: 200,
                         fit: BoxFit.contain,
                       ),
@@ -132,15 +175,17 @@ class _RegisterScreenState extends State<RegisterScreen>
                     ),
                   ),
                   const SizedBox(height: 30),
-                  _buildTextField('Nombres', Icons.person, false),
+                  _buildTextField('Nombres', Icons.person, false, _nombresController),
                   const SizedBox(height: 20),
-                  _buildTextField('Apellidos', Icons.people_alt, false),
+                  _buildTextField('Apellidos', Icons.people_alt, false, _apellidosController),
                   const SizedBox(height: 20),
                   _buildPhoneField(),
                   const SizedBox(height: 20),
                   _buildEmailField(),
                   const SizedBox(height: 20),
                   _buildColegioDropdown(),
+                  const SizedBox(height: 20),
+                  _buildCarreraDropdown(), // <-- Nuevo campo de carrera
                   const SizedBox(height: 30),
                   ScaleTransition(
                     scale: _animation,
@@ -157,12 +202,23 @@ class _RegisterScreenState extends State<RegisterScreen>
                         elevation: 5,
                         shadowColor: Colors.black.withOpacity(0.3),
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         if (_formKey.currentState!.validate()) {
+                          // Guardar en Firebase
+                          await FirebaseFirestore.instance.collection('estudiantes').add({
+                            'nombres': _nombresController.text.trim(),
+                            'apellidos': _apellidosController.text.trim(),
+                            'telefono': _telefonoController.text.trim(),
+                            'email': _emailController.text.trim(),
+                            'colegio': _selectedColegio,
+                            'carrera': _selectedCarrera,
+                            'fechaRegistro': FieldValue.serverTimestamp(),
+                          });
+
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Registro exitoso!'),
-                              backgroundColor: Color(0xFF004077), // Azul cambiado
+                              backgroundColor: Color(0xFF004077),
                             ),
                           );
                           Future.delayed(const Duration(seconds: 1), () {
@@ -173,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                       child: const Text(
                         'REGISTRARSE',
                         style: TextStyle(
-                          color: Color(0xFF004077), // Azul cambiado
+                          color: Color(0xFF004077),
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -189,8 +245,9 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, bool isOptional) {
+  Widget _buildTextField(String label, IconData icon, bool isOptional, TextEditingController controller) {
     return TextFormField(
+      controller: controller,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: const Color(0xFFFFD700)),
@@ -221,6 +278,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   Widget _buildPhoneField() {
     return TextFormField(
+      controller: _telefonoController,
       keyboardType: TextInputType.phone,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: InputDecoration(
@@ -256,6 +314,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   Widget _buildEmailField() {
     return TextFormField(
+      controller: _emailController,
       keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
         labelText: 'Correo electrónico (opcional)',
@@ -317,16 +376,15 @@ class _RegisterScreenState extends State<RegisterScreen>
             style: TextStyle(color: Colors.white70),
           ),
           value: _selectedColegio,
-          items:
-              _colegios.map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(
-                    value,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                );
-              }).toList(),
+          items: _colegios.map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(
+                value,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            );
+          }).toList(),
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Seleccione su colegio';
@@ -336,6 +394,63 @@ class _RegisterScreenState extends State<RegisterScreen>
           onChanged: (value) {
             setState(() {
               _selectedColegio = value;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCarreraDropdown() {
+    return GestureDetector(
+      onTap: () => _showCarreraSearch(context),
+      child: AbsorbPointer(
+        child: DropdownButtonFormField<String>(
+          decoration: InputDecoration(
+            labelText: 'Carrera de interés',
+            prefixIcon: const Icon(Icons.school_outlined, color: Color(0xFFFFD700)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Colors.white),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Colors.white),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Color(0xFFFFD700), width: 2),
+            ),
+            labelStyle: const TextStyle(color: Colors.white),
+            floatingLabelStyle: const TextStyle(color: Color(0xFFFFD700)),
+          ),
+          style: const TextStyle(color: Colors.white),
+          dropdownColor: const Color(0xFF004077),
+          icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFFFD700)),
+          isExpanded: true,
+          hint: const Text(
+            'Seleccione su carrera de interés',
+            style: TextStyle(color: Colors.white70),
+          ),
+          value: _selectedCarrera,
+          items: _carreras.map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(
+                value,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            );
+          }).toList(),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Seleccione su carrera de interés';
+            }
+            return null;
+          },
+          onChanged: (value) {
+            setState(() {
+              _selectedCarrera = value;
             });
           },
         ),
@@ -393,6 +508,70 @@ class _RegisterScreenState extends State<RegisterScreen>
                       onTap: () {
                         setState(() {
                           _selectedColegio = _colegios[index];
+                        });
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showCarreraSearch(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF004077),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  hintText: 'Buscar carrera...',
+                  hintStyle: const TextStyle(color: Colors.white70),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFFFFD700),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Colors.white),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.1),
+                ),
+                style: const TextStyle(color: Colors.white),
+                onChanged: (value) {},
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _carreras.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      leading: const Icon(
+                        Icons.school_outlined,
+                        color: Color(0xFFFFD700),
+                      ),
+                      title: Text(
+                        _carreras[index],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _selectedCarrera = _carreras[index];
                         });
                         Navigator.pop(context);
                       },
