@@ -69,6 +69,19 @@ class _RegisterScreenState extends State<RegisterScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF004077),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.login, color: Color(0xFFFFD700)),
+            tooltip: 'Administrador',
+            onPressed: () {
+              Navigator.pushNamed(context, '/login');
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: AnimatedContainer(
@@ -85,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.transparent, // Cambiado de Colors.white a transparente
+                        color: Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Image.asset(
@@ -151,8 +164,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                               backgroundColor: Color(0xFF004077), // Azul cambiado
                             ),
                           );
-
-                          // Navegar a HomeScreen después del registro exitoso
                           Future.delayed(const Duration(seconds: 1), () {
                             Navigator.pushReplacementNamed(context, '/home');
                           });
@@ -305,15 +316,16 @@ class _RegisterScreenState extends State<RegisterScreen>
             style: TextStyle(color: Colors.white70),
           ),
           value: _selectedColegio,
-          items: _colegios.map((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(
-                value,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-              ),
-            );
-          }).toList(),
+          items:
+              _colegios.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(
+                    value,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                );
+              }).toList(),
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Seleccione su colegio';
