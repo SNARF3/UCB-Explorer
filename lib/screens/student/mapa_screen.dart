@@ -11,7 +11,7 @@ class MapaScreen extends StatelessWidget {
           'Mapa del Campus',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF005CA7),
+        backgroundColor: const Color(0xFF004077), // Cambia el azul aquí también si quieres consistencia
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
@@ -22,7 +22,7 @@ class MapaScreen extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
-                  'lib/assets/images/mapa.png',
+                  'lib/assets/images/mapa.png', // Ruta corregida, sin ../ y sin barra inicial
                   fit: BoxFit.contain,
                   width: double.infinity,
                   height: double.infinity,
@@ -42,7 +42,7 @@ class MapaScreen extends StatelessWidget {
                     Navigator.pushNamed(context, '/trivia');
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF005CA7),
+                    backgroundColor: const Color(0xFF004077), // Cambia el azul de los botones si quieres consistencia
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -59,7 +59,7 @@ class MapaScreen extends StatelessWidget {
                     Navigator.pushNamed(context, '/premios');
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF005CA7),
+                    backgroundColor: const Color(0xFF004077),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -76,7 +76,7 @@ class MapaScreen extends StatelessWidget {
                     Navigator.pushNamed(context, '/qr');
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF005CA7),
+                    backgroundColor: const Color(0xFF004077),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(

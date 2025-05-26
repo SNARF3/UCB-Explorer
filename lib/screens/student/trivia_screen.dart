@@ -85,7 +85,7 @@ class _TriviaScreenState extends State<TriviaScreen> {
           'Trivia Universitaria',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF005CA7),
+        backgroundColor: const Color(0xFF004077),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
@@ -109,7 +109,7 @@ class _TriviaScreenState extends State<TriviaScreen> {
                     Text(
                       pregunta['pregunta'],
                       style: const TextStyle(
-                        color: Color(0xFF005CA7),
+                        color: Color(0xFF004077),
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -122,7 +122,7 @@ class _TriviaScreenState extends State<TriviaScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF005CA7),
+                              backgroundColor: const Color(0xFF004077),
                               minimumSize: const Size(double.infinity, 40),
                             ),
                             onPressed:
@@ -176,7 +176,7 @@ class _TriviaScreenState extends State<TriviaScreen> {
                               style: TextStyle(color: Colors.white),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF005CA7),
+                              backgroundColor: const Color(0xFF004077),
                             ),
                             onPressed:
                                 pregunta['respondida']
@@ -212,7 +212,7 @@ class _TriviaScreenState extends State<TriviaScreen> {
           style: TextStyle(color: Colors.white),
         ),
         icon: const Icon(Icons.check, color: Colors.white),
-        backgroundColor: const Color(0xFF005CA7),
+        backgroundColor: const Color(0xFF004077),
       ),
     );
   }

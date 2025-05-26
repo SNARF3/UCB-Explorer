@@ -18,7 +18,7 @@ class PremiosScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Premios Disponibles', 
               style: TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFF005CA7),
+        backgroundColor: const Color(0xFF004077),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: GridView.builder(
@@ -43,7 +43,7 @@ class PremiosScreen extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12)),
                     child: Image.asset(
-                      'lib/assets/images/${premios[index]['imagen']}',
+                      'lib/assets/images/${premios[index]['imagen']}', // Ruta corregida, sin ../ y sin barra inicial
                       fit: BoxFit.cover,
                       width: double.infinity,
                     ),
@@ -56,7 +56,7 @@ class PremiosScreen extends StatelessWidget {
                       Text(
                         premios[index]['nombre'],
                         style: const TextStyle(
-                          color: Color(0xFF005CA7),
+                          color: Color(0xFF004077), // Azul cambiado
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
