@@ -6,6 +6,8 @@ import '../screens/student/loading_screen.dart';
 import '../screens/student/trivia_screen.dart';
 import '../screens/student/mapa_screen.dart';
 import '../screens/student/premios_screen.dart';
+import '../screens/admin/login_screen.dart';
+import '../screens/admin/admin_dashboard_screen.dart';
 
 void main() {
   runApp(const MainApp());
@@ -32,6 +34,8 @@ class MainApp extends StatelessWidget {
         '/trivia': (context) => const TriviaScreen(),
         '/mapa': (context) => const MapaScreen(),
         '/premios': (context) => const PremiosScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/admin-dashboard': (context) => const AdminDashboardScreen(),
       },
     );
   }
