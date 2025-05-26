@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math';
 import 'qr_scanner_screen.dart';
 
 class TriviaScreen extends StatefulWidget {
@@ -9,53 +11,35 @@ class TriviaScreen extends StatefulWidget {
 }
 
 class _TriviaScreenState extends State<TriviaScreen> {
-  final List<Map<String, dynamic>> _preguntas = [
-    {
-      'pregunta': '¿En qué año fue fundada la UCB?',
-      'tipo': 'multiple',
-      'opciones': ['1966', '1975', '1982', '1990'],
-      'respuesta': 0,
-      'puntos': 500,
-      'respondida': false,
-    },
-    {
-      'pregunta': '¿Dónde comen los estudiantes?',
-      'tipo': 'qr',
-      'puntos': 1000,
-      'lugar': 'Cafetería principal',
-      'respondida': false,
-    },
-    {
-      'pregunta': '¿Cuál es el lema de la universidad?',
-      'tipo': 'multiple',
-      'opciones': [
-        'Ciencia y Virtud',
-        'Educación Integral',
-        'Saber para Servir',
-        'Excelencia Académica',
-      ],
-      'respuesta': 2,
-      'puntos': 750,
-      'respondida': false,
-    },
-    {
-      'pregunta': '¿Dónde se encuentra el auditorio principal?',
-      'tipo': 'qr',
-      'puntos': 1200,
-      'lugar': 'Edificio administrativo',
-      'respondida': false,
-    },
-    {
-      'pregunta': '¿Cuántas facultades tiene la UCB?',
-      'tipo': 'multiple',
-      'opciones': ['8', '10', '12', '15'],
-      'respuesta': 0,
-      'puntos': 600,
-      'respondida': false,
-    },
-  ];
-
+  List<Map<String, dynamic>> _preguntas = [];
   int _puntosTotales = 0;
+  bool _cargando = true;
+
+  // Guarda la opción seleccionada por pregunta
+  final Map<int, String> _opcionSeleccionada = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarPreguntas();
+  }
+
+  Future<void> _cargarPreguntas() async {
+    final snapshot = await FirebaseFirestore.instance.collection('preguntas').get();
+    final preguntas = snapshot.docs.map((doc) {
+      final data = doc.data();
+      return {
+        ...data,
+        'respondida': false,
+      };
+    }).toList();
+
+    preguntas.shuffle(Random());
+    setState(() {
+      _preguntas = preguntas.take(20).toList();
+      _cargando = false;
+    });
+  }
 
   Future<void> _escanearQR(Map<String, dynamic> pregunta) async {
     final resultado = await Navigator.push(
@@ -79,6 +63,12 @@ class _TriviaScreenState extends State<TriviaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_cargando) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -94,20 +84,28 @@ class _TriviaScreenState extends State<TriviaScreen> {
           itemCount: _preguntas.length,
           itemBuilder: (context, index) {
             final pregunta = _preguntas[index];
+            final preguntaTexto = pregunta['Pregunta'] ?? 'Pregunta no disponible';
+            final tipo = pregunta['tipo'] ?? '';
+            final opciones = (pregunta['opciones'] as List?) ?? [];
+            final respuesta = pregunta['respuesta'] ?? '';
+            final puntos = (pregunta['puntos'] as num?)?.toInt() ?? 0;
+            final lugar = pregunta['lugar'] ?? '';
+
             return Card(
               elevation: 4,
               margin: const EdgeInsets.symmetric(vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              color: pregunta['respondida'] ? Colors.grey[200] : Colors.white,
+              // NO cambies el color del Card al responder, mantenlo blanco
+              color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      pregunta['pregunta'],
+                      preguntaTexto,
                       style: const TextStyle(
                         color: Color(0xFF004077),
                         fontWeight: FontWeight.bold,
@@ -115,51 +113,52 @@ class _TriviaScreenState extends State<TriviaScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    if (pregunta['tipo'] == 'multiple')
-                      ...pregunta['opciones'].map((opcion) {
-                        final indice = pregunta['opciones'].indexOf(opcion);
+                    if (tipo == 'multiple')
+                      ...List<Widget>.from(opciones.map((opcion) {
+                        final seleccionada = _opcionSeleccionada[index] == opcion;
+                        final esCorrecta = opcion == respuesta;
+                        Color colorBoton = const Color(0xFF004077);
+
+                        if (pregunta['respondida']) {
+                          if (seleccionada && esCorrecta) {
+                            colorBoton = Colors.green;
+                          } else if (seleccionada && !esCorrecta) {
+                            colorBoton = Colors.red;
+                          } else {
+                            colorBoton = const Color(0xFF004077); // Siempre azul para las no seleccionadas
+                          }
+                        }
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF004077),
+                              backgroundColor: colorBoton,
                               minimumSize: const Size(double.infinity, 40),
                             ),
-                            onPressed:
-                                pregunta['respondida']
-                                    ? null
-                                    : () {
-                                      if (indice == pregunta['respuesta']) {
-                                        setState(() {
-                                          pregunta['respondida'] = true;
-                                          _puntosTotales +=
-                                              (pregunta['puntos'] as num)
-                                                  .toInt();
-                                        });
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              '¡Correcto! +${pregunta['puntos']} puntos',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      }
-                                    },
+                            onPressed: () {
+                              if (!pregunta['respondida']) {
+                                setState(() {
+                                  _opcionSeleccionada[index] = opcion;
+                                  pregunta['respondida'] = true;
+                                  if (opcion == respuesta) {
+                                    _puntosTotales += puntos;
+                                  }
+                                });
+                              }
+                            },
                             child: Text(
-                              opcion,
+                              opcion?.toString() ?? '',
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
                         );
-                      }).toList()
+                      }))
                     else
                       Column(
                         children: [
                           Text(
-                            'Escanea el QR en: ${pregunta['lugar']}',
+                            'Escanea el QR en: $lugar',
                             style: const TextStyle(
                               color: Colors.orange,
                               fontWeight: FontWeight.bold,
@@ -178,10 +177,9 @@ class _TriviaScreenState extends State<TriviaScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF004077),
                             ),
-                            onPressed:
-                                pregunta['respondida']
-                                    ? null
-                                    : () => _escanearQR(pregunta),
+                            onPressed: pregunta['respondida']
+                                ? null
+                                : () => _escanearQR(pregunta),
                           ),
                         ],
                       ),
@@ -189,9 +187,13 @@ class _TriviaScreenState extends State<TriviaScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
-                          '+${pregunta['puntos']} puntos obtenidos',
-                          style: const TextStyle(
-                            color: Colors.green,
+                          _opcionSeleccionada[index] == respuesta
+                              ? '+$puntos puntos obtenidos'
+                              : 'Respuesta incorrecta',
+                          style: TextStyle(
+                            color: _opcionSeleccionada[index] == respuesta
+                                ? Colors.green
+                                : Colors.red,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
