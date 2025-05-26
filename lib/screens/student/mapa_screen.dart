@@ -22,7 +22,7 @@ class MapaScreen extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
-                  'assets/images/mapa.png',
+                  '../lib/assets/images/mapa.png',
                   fit: BoxFit.contain,
                   width: double.infinity,
                   height: double.infinity,
