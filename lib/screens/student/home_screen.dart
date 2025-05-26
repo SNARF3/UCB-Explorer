@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/punto_card.dart';
-import 'qr_scanner_screen.dart';
 import 'chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {

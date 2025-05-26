@@ -1,7 +1,5 @@
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter/material.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
-import 'package:permission_handler/permission_handler.dart';
-
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({super.key});
 
@@ -10,78 +8,65 @@ class QRScannerScreen extends StatefulWidget {
 }
 
 class _QRScannerScreenState extends State<QRScannerScreen> {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? controller;
+  MobileScannerController cameraController = MobileScannerController();
   String? scannedCode;
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    if (controller != null) {
-      controller!.pauseCamera();
-      controller!.resumeCamera();
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _checkPermission();
-  }
-
-  Future<void> _checkPermission() async {
-    var status = await Permission.camera.request();
-    if (!status.isGranted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('La cámara es necesaria para escanear QR'),
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF005CA7),
-        title: const Text('Escáner QR'),
-        centerTitle: true,
+        title: const Text('Escaner QR'),
+        actions: [
+          IconButton(
+            icon: ValueListenableBuilder(
+              valueListenable: cameraController.torchState,
+              builder: (context, state, child) {
+                switch (state) {
+                  case TorchState.off:
+                    return const Icon(Icons.flash_off, color: Colors.grey);
+                  case TorchState.on:
+                    return const Icon(Icons.flash_on, color: Colors.yellow);
+                }
+              },
+            ),
+            onPressed: () => cameraController.toggleTorch(),
+          ),
+          IconButton(
+            icon: ValueListenableBuilder(
+              valueListenable: cameraController.cameraFacingState,
+              builder: (context, state, child) {
+                switch (state) {
+                  case CameraFacing.front:
+                    return const Icon(Icons.camera_front);
+                  case CameraFacing.back:
+                    return const Icon(Icons.camera_rear);
+                }
+              },
+            ),
+            onPressed: () => cameraController.switchCamera(),
+          ),
+        ],
       ),
       body: Column(
         children: [
           Expanded(
-            flex: 3,
-            child: QRView(
-              key: qrKey,
-              onQRViewCreated: _onQRViewCreated,
-              overlay: QrScannerOverlayShape(
-                borderColor: const Color(0xFFFFD700),
-                borderRadius: 10,
-                borderLength: 30,
-                borderWidth: 10,
-                cutOutSize: MediaQuery.of(context).size.width * 0.7,
-              ),
+            child: MobileScanner(
+              controller: cameraController,
+              onDetect: (capture) {
+                final List<Barcode> barcodes = capture.barcodes;
+                for (final barcode in barcodes) {
+                  setState(() {
+                    scannedCode = barcode.rawValue;
+                  });
+                }
+              },
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Center(
-              child:
-                  scannedCode != null
-                      ? Text(
-                        'Código: $scannedCode',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF005CA7),
-                        ),
-                      )
-                      : const Text(
-                        'Escanea un código QR',
-                        style: TextStyle(fontSize: 16),
-                      ),
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              scannedCode ?? 'Escanea un código QR',
+              style: const TextStyle(fontSize: 18),
             ),
           ),
         ],
@@ -89,29 +74,9 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     );
   }
 
-  void _onQRViewCreated(QRViewController controller) {
-    this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
-      if (scannedCode == null) {
-        setState(() {
-          scannedCode = scanData.code;
-        });
-        controller.pauseCamera();
-
-        // Aquí podrías guardar puntos o redirigir
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('QR Escaneado: ${scanData.code}')),
-        );
-
-        // Redirigir o hacer algo
-        // Navigator.pushNamed(context, '/premios');
-      }
-    });
-  }
-
   @override
   void dispose() {
-    controller?.dispose();
+    cameraController.dispose();
     super.dispose();
   }
 }
