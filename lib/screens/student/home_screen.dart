@@ -40,6 +40,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       parent: _animationController,
       curve: Curves.easeOutQuad,
     ));
+
+    _animationController.forward(); // <-- Agrega esta línea
   }
 
   @override
@@ -89,50 +91,61 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
         body: Stack(
           children: [
-            // Contenido principal
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: FadeTransition(
-                    opacity: _opacityAnimation, // <-- Cambiado aquí
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '¡Bienvenido!',
-                          style: TextStyle(
-                            color: Color(0xFF004077),
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Explora la UCB, gana puntos y canjea premios.',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        const PuntoCard(puntos: 120),
-                        const SizedBox(height: 18),
-                      ],
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: FadeTransition(
-                    opacity: _opacityAnimation, // <-- Cambiado aquí
-                    child: Container(
+            FadeTransition(
+              opacity: _opacityAnimation,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Banner scrolleable
+                    Container(
+                      height: MediaQuery.of(context).size.height * 0.12,
                       width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF004077),
+                        image: DecorationImage(
+                          image: AssetImage('lib/assets/images/banner.jpg'),
+                          fit: BoxFit.contain,
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '¡Bienvenido!',
+                            style: TextStyle(
+                              color: Color(0xFF004077),
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Explora la UCB, gana puntos y canjea premios.',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          const PuntoCard(puntos: 120),
+                          const SizedBox(height: 18),
+                        ],
+                      ),
+                    ),
+                    Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: GridView(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           mainAxisSpacing: 20,
@@ -167,9 +180,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         ],
                       ),
                     ),
-                  ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.feedback, color: Colors.black),
+                          label: const Text(
+                            'Dejar Feedback',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFFD700),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 3,
+                          ),
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/feedback');
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
             // Chat Widget
             if (_isChatOpen) ...[

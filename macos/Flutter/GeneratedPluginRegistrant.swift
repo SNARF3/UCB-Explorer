@@ -7,6 +7,8 @@ import Foundation
 
 import cloud_firestore
 import firebase_core
+import cloud_firestore
+import firebase_core
 import firebase_storage
 import mobile_scanner
 import path_provider_foundation
