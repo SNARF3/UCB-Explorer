@@ -142,114 +142,112 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
       body: Stack(
         children: [
-          FadeTransition(
-            opacity: _opacityAnimation,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 24),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '¡Bienvenido!',
-                          style: TextStyle(
-                            color: Color(0xFF004077),
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
+          // Contenido principal
+          SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '¡Bienvenido!',
+                        style: TextStyle(
+                          color: Color(0xFF004077),
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
                         ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Explora la UCB, gana puntos y canjea premios.',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        const PuntoCard(puntos: 120),
-                        const SizedBox(height: 18),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: GridView(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 20,
-                        crossAxisSpacing: 20,
-                        childAspectRatio: 1.05,
                       ),
-                      children: [
-                        CustomButton(
-                          icon: Icons.qr_code_scanner,
-                          text: 'Escanear QR',
-                          onTap: () => Navigator.pushNamed(context, '/qr'),
-                          color: const Color(0xFFFFD700),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Explora la UCB, gana puntos y canjea premios.',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
                         ),
-                        CustomButton(
-                          icon: Icons.card_giftcard,
-                          text: 'Premios',
-                          onTap: () => Navigator.pushNamed(context, '/premios'),
-                          color: const Color(0xFFFFD700),
-                        ),
-                        CustomButton(
-                          icon: Icons.videogame_asset,
-                          text: 'Juegos',
-                          onTap: () => Navigator.pushNamed(context, '/trivia'),
-                          color: const Color(0xFFFFD700),
-                        ),
-                        CustomButton(
-                          icon: Icons.map,
-                          text: 'Mapa',
-                          onTap: () => Navigator.pushNamed(context, '/mapa'),
-                          color: const Color(0xFFFFD700),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 12),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.feedback, color: Colors.black),
-                        label: const Text(
-                          'Dejar Feedback',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFD700),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          elevation: 3,
-                        ),
-                        onPressed: _showFeedbackDialog,
                       ),
+                      const SizedBox(height: 18),
+                      const PuntoCard(puntos: 120),
+                      const SizedBox(height: 18),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: GridView(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 20,
+                      childAspectRatio: 1.05,
+                    ),
+                    children: [
+                      CustomButton(
+                        icon: Icons.qr_code_scanner,
+                        text: 'Escanear QR',
+                        onTap: () => Navigator.pushNamed(context, '/qr'),
+                        color: const Color(0xFFFFD700),
+                      ),
+                      CustomButton(
+                        icon: Icons.card_giftcard,
+                        text: 'Premios',
+                        onTap: () => Navigator.pushNamed(context, '/premios'),
+                        color: const Color(0xFFFFD700),
+                      ),
+                      CustomButton(
+                        icon: Icons.videogame_asset,
+                        text: 'Juegos',
+                        onTap: () => Navigator.pushNamed(context, '/trivia'),
+                        color: const Color(0xFFFFD700),
+                      ),
+                      CustomButton(
+                        icon: Icons.map,
+                        text: 'Mapa',
+                        onTap: () => Navigator.pushNamed(context, '/mapa'),
+                        color: const Color(0xFFFFD700),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.feedback, color: Colors.black),
+                      label: const Text(
+                        'Dejar Feedback',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFD700),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 3,
+                      ),
+                      onPressed: _showFeedbackDialog,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          
-          // Chat Widget con animaciones mejoradas
+
+          // Fondo oscuro y chat
           if (_isChatOpen)
             Positioned.fill(
               child: Container(
@@ -282,8 +280,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               ),
             ),
-          
-          // Botón de chat flotante mejorado
+
+          // Botón de chat flotante
           if (!_isChatOpen)
             Positioned(
               right: 16,
