@@ -201,6 +201,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 key: ValueKey<bool>(_isChatOpen),
                 backgroundColor: _isChatOpen ? Colors.red : Colors.blue,
                 onPressed: _toggleChat,
+                child: Icon(
+                  _isChatOpen ? Icons.close : Icons.chat,
+                  color: Colors.white,
+                  size: 30,
+                ),
               ),
             ),
           ),
