@@ -89,7 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Image.asset(
-                        '../assets/images/UCB.png',
+                        '../lib/assets/images/UCB.png',
                         height: 200,
                         fit: BoxFit.contain,
                       ),

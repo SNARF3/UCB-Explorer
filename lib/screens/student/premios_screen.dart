@@ -43,7 +43,7 @@ class PremiosScreen extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12)),
                     child: Image.asset(
-                      '../assets/images/${premios[index]['imagen']}',
+                      '../lib/assets/images/${premios[index]['imagen']}',
                       fit: BoxFit.cover,
                       width: double.infinity,
                     ),

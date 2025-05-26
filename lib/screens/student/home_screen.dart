@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen>
               width: double.infinity,
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('../assets/images/banner.jpg'),
+                  image: AssetImage('../lib/assets/images/banner.jpg'),
                   fit: BoxFit.contain,
                 ),
               ),
@@ -108,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen>
                             CustomButton(
                               icon: Icons.videogame_asset,
                               text: 'Juegos',
-                              onTap: () => Navigator.pushNamed(context, '/juegos'),
+                              onTap: () => Navigator.pushNamed(context, '/trivia'),
                               color: const Color(0xFFFFD700),
                             ),
                             CustomButton(
