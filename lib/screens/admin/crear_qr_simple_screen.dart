@@ -1,14 +1,11 @@
 import 'dart:io';
-import 'dart:ui' as ui;
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 class CrearQRSimpleScreen extends StatefulWidget {
   const CrearQRSimpleScreen({super.key});
@@ -20,8 +17,8 @@ class CrearQRSimpleScreen extends StatefulWidget {
 class _CrearQRSimpleScreenState extends State<CrearQRSimpleScreen> {
   final TextEditingController _descripcionController = TextEditingController();
   final TextEditingController _contenidoQRController = TextEditingController();
-  String? _qrGenerado;
   final GlobalKey _qrKey = GlobalKey();
+  String? _qrGenerado;
 
   void _generarQR() {
     setState(() {
@@ -29,71 +26,64 @@ class _CrearQRSimpleScreenState extends State<CrearQRSimpleScreen> {
     });
   }
 
-  Future<void> _guardarTodo() async {
-    final descripcion = _descripcionController.text.trim();
-    final contenidoQR = _qrGenerado;
-
-    if (descripcion.isEmpty || contenidoQR == null || contenidoQR.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completa todos los campos')),
-      );
-      return;
-    }
-
+  Future<Uint8List?> _capturarQRBytes() async {
     try {
-      // Capturar imagen PNG del QR
-      RenderRepaintBoundary boundary =
+      await WidgetsBinding.instance.endOfFrame;
+      final boundary =
           _qrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      var image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-      // Subir a Firebase Storage
-      final fileName = 'qr_${DateTime.now().millisecondsSinceEpoch}.png';
-      final ref = FirebaseStorage.instance.ref().child('qr_imagenes/$fileName');
-      await ref.putData(pngBytes);
-      final urlImagen = await ref.getDownloadURL();
-
-      // Guardar en Firestore
-      await FirebaseFirestore.instance.collection('qr').add({
-        'datos': descripcion,
-        'qr': contenidoQR,
-        'urlImagen': urlImagen,
-        'fecha': Timestamp.now(),
-      });
-
-      // Guardar en dispositivo
-      await _guardarEnDispositivo(pngBytes);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('QR guardado en Firestore, Storage y dispositivo'),
-        ),
-      );
-
-      setState(() {
-        _descripcionController.clear();
-        _contenidoQRController.clear();
-        _qrGenerado = null;
-      });
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al guardar: $e')));
+      print('❌ Error capturando QR: $e');
+      return null;
     }
   }
 
-  Future<void> _guardarEnDispositivo(Uint8List bytes) async {
-    final status = await Permission.storage.request();
-    if (!status.isGranted) return;
+  Future<void> _descargarQR() async {
+    final bytes = await _capturarQRBytes();
+    if (bytes == null) return;
 
-    final directory = await getApplicationDocumentsDirectory();
-    final path =
-        '${directory.path}/qr_${DateTime.now().millisecondsSinceEpoch}.png';
-    final file = File(path);
-    await file.writeAsBytes(bytes);
+    try {
+      if (Platform.isAndroid) {
+        final status = await Permission.storage.request();
+        if (!status.isGranted) {
+          print('❌ Permiso denegado');
+          return;
+        }
+
+        final result = await ImageGallerySaver.saveImage(
+          bytes,
+          quality: 100,
+          name: 'qr_${DateTime.now().millisecondsSinceEpoch}',
+        );
+
+        print('✅ Guardado en galería: $result');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('📁 QR guardado en la galería')),
+        );
+      } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        final directory = Directory.current;
+        final path =
+            '${directory.path}/qr_${DateTime.now().millisecondsSinceEpoch}.png';
+        final file = File(path);
+        await file.writeAsBytes(bytes);
+
+        print('✅ QR guardado en PC: $path');
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('📁 QR guardado en: $path')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('⚠️ Plataforma no soportada')),
+        );
+      }
+    } catch (e) {
+      print('❌ Error al guardar: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('❌ Error al guardar: $e')));
+    }
   }
 
   @override
@@ -122,31 +112,13 @@ class _CrearQRSimpleScreenState extends State<CrearQRSimpleScreen> {
             TextField(
               controller: _descripcionController,
               style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Descripción del QR',
-                labelStyle: const TextStyle(color: Colors.white),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFFFFD700), width: 2),
-                ),
-              ),
+              decoration: _buildInput('Descripción del QR'),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: _contenidoQRController,
               style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Contenido del QR (texto, URL, ID...)',
-                labelStyle: const TextStyle(color: Colors.white),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFFFFD700), width: 2),
-                ),
-              ),
+              decoration: _buildInput('Contenido del QR'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -175,23 +147,29 @@ class _CrearQRSimpleScreenState extends State<CrearQRSimpleScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _guardarTodo,
+                  ElevatedButton.icon(
+                    onPressed: _descargarQR,
+                    icon: const Icon(Icons.download, color: Color(0xFF004077)),
+                    label: const Text('Descargar QR'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFD700),
-                    ),
-                    child: const Text(
-                      'Guardar y Descargar',
-                      style: TextStyle(
-                        color: Color(0xFF004077),
-                        fontWeight: FontWeight.bold,
-                      ),
+                      backgroundColor: Color(0xFFFFD700),
                     ),
                   ),
                 ],
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  InputDecoration _buildInput(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Color(0xFFFFD700), width: 2),
       ),
     );
   }

@@ -19,7 +19,9 @@ dependencies:
   qr_flutter: ^4.0.0
   firebase_storage: ^12.4.6
   path_provider: ^2.1.5
-
+  image_gallery_saver: ^1.7.1
+  universal_platform: ^1.0.0+1
+  
 
 
 
