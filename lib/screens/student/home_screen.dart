@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/punto_card.dart';
@@ -40,6 +41,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       parent: _animationController,
       curve: Curves.easeOutQuad,
     ));
+
+    _animationController.forward();
   }
 
   @override
@@ -59,6 +62,58 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     });
   }
 
+  Future<void> _showFeedbackDialog() async {
+    final TextEditingController _feedbackController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Deja tu feedback'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: _feedbackController,
+            maxLines: 5,
+            maxLength: 500,
+            decoration: const InputDecoration(
+              hintText: 'Escribe tu experiencia y qué podría mejorar la UCB...',
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Por favor, escribe tu feedback';
+              }
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Cancelar'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004077)),
+            child: const Text('Enviar', style: TextStyle(color: Colors.white)),
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                await FirebaseFirestore.instance.collection('feedback').add({
+                  'mensaje': _feedbackController.text.trim(),
+                  'fecha': FieldValue.serverTimestamp(),
+                });
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('¡Gracias por tu feedback!')),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -67,19 +122,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(screenHeight * 0.15),
+        preferredSize: Size.fromHeight(screenHeight * 0.1),
         child: AppBar(
-          backgroundColor: const Color.fromARGB(255, 0, 64, 117),
+          backgroundColor: const Color(0xFF004077),
           elevation: 0,
-          flexibleSpace: Center(
-            child: Container(
-              height: screenHeight * 0.12,
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('lib/assets/images/banner.jpg'), // Ruta corregida
-                  fit: BoxFit.contain,
-                ),
+          automaticallyImplyLeading: false,
+          flexibleSpace: Container(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Image.asset(
+                'lib/assets/images/banner.jpg',
+                fit: BoxFit.contain,
+                height: screenHeight * 0.08,
               ),
             ),
           ),
@@ -87,73 +142,114 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
       body: Stack(
         children: [
-          // Contenido principal
-          Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '¡Bienvenido!',
-                        style: TextStyle(
-                          color: Color.fromARGB(255, 0, 73, 134),
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+          FadeTransition(
+            opacity: _opacityAnimation,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '¡Bienvenido!',
+                          style: TextStyle(
+                            color: Color(0xFF004077),
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Explora la UCB, gana puntos y canjea premios.',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                      const SizedBox(height: 20),
-                      const PuntoCard(puntos: 120),
-                      const SizedBox(height: 24),
-                      Expanded(
-                        child: GridView.count(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 14,
-                          crossAxisSpacing: 14,
-                          padding: const EdgeInsets.all(8),
-                          children: [
-                            CustomButton(
-                              icon: Icons.qr_code_scanner,
-                              text: 'Escanear QR',
-                              onTap: () => Navigator.pushNamed(context, '/qr'),
-                              color: const Color(0xFFFFD700),
-                            ),
-                            CustomButton(
-                              icon: Icons.card_giftcard,
-                              text: 'Premios',
-                              onTap: () => Navigator.pushNamed(context, '/premios'),
-                              color: const Color(0xFFFFD700),
-                            ),
-                            CustomButton(
-                              icon: Icons.videogame_asset,
-                              text: 'Juegos',
-                              onTap: () => Navigator.pushNamed(context, '/juegos'),
-                              color: const Color(0xFFFFD700),
-                            ),
-                            CustomButton(
-                              icon: Icons.map,
-                              text: 'Mapa',
-                              onTap: () => Navigator.pushNamed(context, '/mapa'),
-                              color: const Color(0xFFFFD700),
-                            ),
-                          ],
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Explora la UCB, gana puntos y canjea premios.',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 18),
+                        const PuntoCard(puntos: 120),
+                        const SizedBox(height: 18),
+                      ],
+                    ),
                   ),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: GridView(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 20,
+                        crossAxisSpacing: 20,
+                        childAspectRatio: 1.05,
+                      ),
+                      children: [
+                        CustomButton(
+                          icon: Icons.qr_code_scanner,
+                          text: 'Escanear QR',
+                          onTap: () => Navigator.pushNamed(context, '/qr'),
+                          color: const Color(0xFFFFD700),
+                        ),
+                        CustomButton(
+                          icon: Icons.card_giftcard,
+                          text: 'Premios',
+                          onTap: () => Navigator.pushNamed(context, '/premios'),
+                          color: const Color(0xFFFFD700),
+                        ),
+                        CustomButton(
+                          icon: Icons.videogame_asset,
+                          text: 'Juegos',
+                          onTap: () => Navigator.pushNamed(context, '/trivia'),
+                          color: const Color(0xFFFFD700),
+                        ),
+                        CustomButton(
+                          icon: Icons.map,
+                          text: 'Mapa',
+                          onTap: () => Navigator.pushNamed(context, '/mapa'),
+                          color: const Color(0xFFFFD700),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.feedback, color: Colors.black),
+                        label: const Text(
+                          'Dejar Feedback',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFD700),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          elevation: 3,
+                        ),
+                        onPressed: _showFeedbackDialog,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
           
-          // Chat Widget con animaciones
+          // Chat Widget con animaciones mejoradas
           if (_isChatOpen)
             Positioned.fill(
               child: Container(
@@ -172,9 +268,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             borderRadius: BorderRadius.circular(16),
                             elevation: 8,
                             child: Container(
-                              margin: const EdgeInsets.only(top: 0), // Reduce el margen superior
                               width: screenWidth * 0.9,
-                              height: screenHeight * 0.8, // Ajusta la altura si es necesario
+                              height: screenHeight * 0.6,
                               child: ChatWidget(
                                 onClose: _toggleChat,
                               ),
@@ -188,8 +283,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ),
           
-          // Botón de chat flotante
-          if (!_isChatOpen) // Solo muestra el botón si el chat no está abierto
+          // Botón de chat flotante mejorado
+          if (!_isChatOpen)
             Positioned(
               right: 16,
               bottom: 16,
@@ -200,10 +295,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 },
                 child: FloatingActionButton(
                   key: ValueKey<bool>(_isChatOpen),
-                  backgroundColor: Colors.blue, // Siempre azul
+                  backgroundColor: const Color(0xFF004077),
                   onPressed: _toggleChat,
                   child: const Icon(
-                    Icons.chat, // Solo muestra el ícono del chat
+                    Icons.chat,
                     color: Colors.white,
                     size: 30,
                   ),

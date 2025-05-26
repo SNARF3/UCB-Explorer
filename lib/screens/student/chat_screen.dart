@@ -4,7 +4,7 @@ import '../../services/gemini_service.dart';
 class ChatWidget extends StatefulWidget {
   final VoidCallback onClose;
 
-  const ChatWidget({Key? key, required this.onClose}) : super(key: key);
+  const ChatWidget({super.key, required this.onClose});
 
   @override
   State<ChatWidget> createState() => _ChatWidgetState();

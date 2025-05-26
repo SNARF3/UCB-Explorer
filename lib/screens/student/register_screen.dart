@@ -69,6 +69,20 @@ class _RegisterScreenState extends State<RegisterScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF004077),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false, // <--- Agrega esta línea
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.login, color: Color(0xFFFFD700)),
+            tooltip: 'Administrador',
+            onPressed: () {
+              Navigator.pushNamed(context, '/login');
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: AnimatedContainer(
@@ -85,11 +99,11 @@ class _RegisterScreenState extends State<RegisterScreen>
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.transparent, // Cambiado de Colors.white a transparente
+                        color: Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Image.asset(
-                        'lib/assets/images/UCB.png',
+                        'lib/assets/images/UCB.png', // Ruta corregida, sin ../ y sin barra inicial
                         height: 200,
                         fit: BoxFit.contain,
                       ),
@@ -148,11 +162,9 @@ class _RegisterScreenState extends State<RegisterScreen>
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Registro exitoso!'),
-                              backgroundColor: Color(0xFF005CA7),
+                              backgroundColor: Color(0xFF004077), // Azul cambiado
                             ),
                           );
-
-                          // Navegar a HomeScreen después del registro exitoso
                           Future.delayed(const Duration(seconds: 1), () {
                             Navigator.pushReplacementNamed(context, '/home');
                           });
@@ -161,7 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                       child: const Text(
                         'REGISTRARSE',
                         style: TextStyle(
-                          color: Color(0xFF005CA7),
+                          color: Color(0xFF004077), // Azul cambiado
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -297,7 +309,7 @@ class _RegisterScreenState extends State<RegisterScreen>
             floatingLabelStyle: const TextStyle(color: Color(0xFFFFD700)),
           ),
           style: const TextStyle(color: Colors.white),
-          dropdownColor: const Color(0xFF005CA7),
+          dropdownColor: const Color(0xFF004077),
           icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFFFD700)),
           isExpanded: true,
           hint: const Text(
@@ -305,15 +317,16 @@ class _RegisterScreenState extends State<RegisterScreen>
             style: TextStyle(color: Colors.white70),
           ),
           value: _selectedColegio,
-          items: _colegios.map((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(
-                value,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-              ),
-            );
-          }).toList(),
+          items:
+              _colegios.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(
+                    value,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                );
+              }).toList(),
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Seleccione su colegio';
@@ -333,7 +346,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   void _showColegioSearch(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF005CA7),
+      backgroundColor: const Color(0xFF004077),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
