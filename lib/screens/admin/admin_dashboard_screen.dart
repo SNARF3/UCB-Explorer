@@ -35,6 +35,18 @@ class AdminDashboardScreen extends StatelessWidget {
               label: '📸 Crear Código QR',
               route: '/admin-crear-qr',
             ),
+            const SizedBox(height: 20),
+            _buildMenuButton(
+              context,
+              label: '📄 Ver y Editar Preguntas',
+              route: '/admin-ver-preguntas',
+            ),
+            const SizedBox(height: 20),
+            _buildMenuButton(
+              context,
+              label: '🧾 Ver y Editar QRs',
+              route: '/admin-ver-qr',
+            ),
           ],
         ),
       ),
