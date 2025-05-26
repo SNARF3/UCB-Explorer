@@ -189,21 +189,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
           
           // Botón de chat flotante
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return ScaleTransition(scale: animation, child: child);
-              },
-              child: FloatingActionButton(
-                key: ValueKey<bool>(_isChatOpen),
-                backgroundColor: _isChatOpen ? Colors.red : Colors.blue,
-                onPressed: _toggleChat,
+          if (!_isChatOpen) // Solo muestra el botón si el chat no está abierto
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return ScaleTransition(scale: animation, child: child);
+                },
+                child: FloatingActionButton(
+                  key: ValueKey<bool>(_isChatOpen),
+                  backgroundColor: Colors.blue, // Siempre azul
+                  onPressed: _toggleChat,
+                  child: const Icon(
+                    Icons.chat, // Solo muestra el ícono del chat
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
