@@ -72,6 +72,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false, // <--- Agrega esta línea
         actions: [
           IconButton(
             icon: const Icon(Icons.login, color: Color(0xFFFFD700)),
