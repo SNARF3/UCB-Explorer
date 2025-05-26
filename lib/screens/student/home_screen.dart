@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen>
               width: double.infinity,
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('../assets/images/banner.jpg'),
+                  image: AssetImage('../../assets/images/banner.jpg'),
                   fit: BoxFit.contain,
                 ),
               ),
