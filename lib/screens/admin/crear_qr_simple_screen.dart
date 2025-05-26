@@ -45,7 +45,9 @@ class _CrearQRSimpleScreenState extends State<CrearQRSimpleScreen> {
       RenderRepaintBoundary boundary =
           _qrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       var image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
+      ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
       Uint8List pngBytes = byteData!.buffer.asUint8List();
 
       // Subir a Firebase Storage
