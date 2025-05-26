@@ -21,13 +21,13 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF005CA7),
+      backgroundColor: const Color(0xFF004077), // Cambiado a azul #004077
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              '../lib/assets/images/UCB.png',
+              'lib/assets/images/UCB.png', // <-- Ruta corregida, sin barra inicial
               width: 200,
               height: 200,
               fit: BoxFit.contain,

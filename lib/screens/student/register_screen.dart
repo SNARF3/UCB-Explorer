@@ -89,7 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Image.asset(
-                        '../lib/assets/images/UCB.png',
+                        'lib/assets/images/UCB.png', // Ruta corregida, sin ../ y sin barra inicial
                         height: 200,
                         fit: BoxFit.contain,
                       ),
@@ -148,7 +148,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Registro exitoso!'),
-                              backgroundColor: Color(0xFF005CA7),
+                              backgroundColor: Color(0xFF004077), // Azul cambiado
                             ),
                           );
 
@@ -161,7 +161,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                       child: const Text(
                         'REGISTRARSE',
                         style: TextStyle(
-                          color: Color(0xFF005CA7),
+                          color: Color(0xFF004077), // Azul cambiado
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -297,7 +297,7 @@ class _RegisterScreenState extends State<RegisterScreen>
             floatingLabelStyle: const TextStyle(color: Color(0xFFFFD700)),
           ),
           style: const TextStyle(color: Colors.white),
-          dropdownColor: const Color(0xFF005CA7),
+          dropdownColor: const Color(0xFF004077),
           icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFFFD700)),
           isExpanded: true,
           hint: const Text(
@@ -333,7 +333,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   void _showColegioSearch(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF005CA7),
+      backgroundColor: const Color(0xFF004077),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
