@@ -3,9 +3,8 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/rendering.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:path_provider/path_provider.dart';
 
 class CrearQRSimpleScreen extends StatefulWidget {
   const CrearQRSimpleScreen({super.key});
@@ -45,44 +44,31 @@ class _CrearQRSimpleScreenState extends State<CrearQRSimpleScreen> {
     if (bytes == null) return;
 
     try {
+      Directory? downloadsDir;
+
       if (Platform.isAndroid) {
-        final status = await Permission.storage.request();
-        if (!status.isGranted) {
-          print('❌ Permiso denegado');
-          return;
-        }
-
-        final result = await ImageGallerySaver.saveImage(
-          bytes,
-          quality: 100,
-          name: 'qr_${DateTime.now().millisecondsSinceEpoch}',
-        );
-
-        print('✅ Guardado en galería: $result');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('📁 QR guardado en la galería')),
-        );
+        // Para Android, se usa getExternalStorageDirectory (sin permisos)
+        downloadsDir = Directory('/storage/emulated/0/Download');
       } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-        final directory = Directory.current;
-        final path =
-            '${directory.path}/qr_${DateTime.now().millisecondsSinceEpoch}.png';
-        final file = File(path);
-        await file.writeAsBytes(bytes);
-
-        print('✅ QR guardado en PC: $path');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('📁 QR guardado en: $path')));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('⚠️ Plataforma no soportada')),
-        );
+        downloadsDir = await getDownloadsDirectory();
       }
+
+      if (downloadsDir == null || !(await downloadsDir.exists())) {
+        throw Exception('Directorio de descargas no encontrado');
+      }
+
+      final file = File('${downloadsDir.path}/qr_${DateTime.now().millisecondsSinceEpoch}.png');
+      await file.writeAsBytes(bytes);
+
+      print('✅ QR guardado en: ${file.path}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('📁 QR guardado en: ${file.path}')),
+      );
     } catch (e) {
-      print('❌ Error al guardar: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('❌ Error al guardar: $e')));
+      print('❌ Error al guardar QR: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Error al guardar: ${e.toString()}')),
+      );
     }
   }
 
