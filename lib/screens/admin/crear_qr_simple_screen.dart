@@ -47,9 +47,14 @@ class _CrearQRSimpleScreenState extends State<CrearQRSimpleScreen> {
       Directory? downloadsDir;
 
       if (Platform.isAndroid) {
-        // Para Android, se usa getExternalStorageDirectory (sin permisos)
+        // Para Android, usa el directorio de descargas
         downloadsDir = Directory('/storage/emulated/0/Download');
-      } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        if (!(await downloadsDir.exists())) {
+          downloadsDir = await getExternalStorageDirectory();
+        }
+      } else if (Platform.isIOS) {
+        downloadsDir = await getApplicationDocumentsDirectory();
+      } else {
         downloadsDir = await getDownloadsDirectory();
       }
 
