@@ -14,6 +14,7 @@ import '../screens/admin/login_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/admin/crear_pregunta_screen.dart';
 import '../screens/admin/ver_preguntas_screen.dart';
+import '../screens/admin/crear_qr_simple_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +53,7 @@ class MainApp extends StatelessWidget {
         '/admin-dashboard': (context) => const AdminDashboardScreen(),
         '/admin-crear-pregunta': (context) => const CrearPreguntaScreen(),
         '/admin-ver-preguntas': (context) => const VerPreguntasScreen(),
+        '/admin-crear-qr': (context) => const CrearQRSimpleScreen(),
       },
     );
   }
