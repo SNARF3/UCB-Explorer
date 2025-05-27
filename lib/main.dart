@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // <-- Agrega esto
 
 import '../screens/student/home_screen.dart';
 import '../screens/student/qr_scanner_screen.dart';
@@ -17,11 +18,16 @@ import '../screens/admin/ver_preguntas_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MainApp());
+
+  final prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getString('userId');
+
+  runApp(MainApp(initialRoute: userId == null ? '/register' : '/home'));
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  final String initialRoute;
+  const MainApp({super.key, this.initialRoute = '/register'});
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +38,11 @@ class MainApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF005CA7),
       ),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/loading', // Inicia con la pantalla de carga
+      initialRoute: initialRoute,
       routes: {
         '/loading': (context) => const LoadingScreen(),
         '/': (context) => const RegisterScreen(),
+        '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeScreen(),
         '/qr': (context) => const QRScannerScreen(),
         '/trivia': (context) => const TriviaScreen(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // <-- Añade esta línea
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -205,7 +206,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
                           // Guardar en Firebase
-                          await FirebaseFirestore.instance.collection('estudiantes').add({
+                          final docRef = await FirebaseFirestore.instance.collection('estudiantes').add({
                             'nombres': _nombresController.text.trim(),
                             'apellidos': _apellidosController.text.trim(),
                             'telefono': _telefonoController.text.trim(),
@@ -213,7 +214,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                             'colegio': _selectedColegio,
                             'carrera': _selectedCarrera,
                             'fechaRegistro': FieldValue.serverTimestamp(),
+                            'puntos': 0, // <-- Nuevo atributo para puntos iniciales
                           });
+
+                          // Guarda el ID localmente
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setString('userId', docRef.id);
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
