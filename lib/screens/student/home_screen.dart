@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/punto_card.dart';
 import 'chat_screen.dart';
@@ -17,6 +18,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
   late Animation<Offset> _slideAnimation;
+
+  String? _userId;
 
   @override
   void initState() {
@@ -43,6 +46,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     ));
 
     _animationController.forward();
+
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getString('userId');
+    });
   }
 
   @override
@@ -130,11 +142,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           flexibleSpace: Container(
             alignment: Alignment.center,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0), // Opcional: agrega padding para más control
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Image.asset(
                 'lib/assets/images/banner.jpg',
                 fit: BoxFit.contain,
-                height: screenHeight * 0.08, // Ajusta el alto de la imagen
+                height: screenHeight * 0.08,
               ),
             ),
           ),
@@ -174,7 +186,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ),
                         ),
                         const SizedBox(height: 18),
-                        const PuntoCard(puntos: 120),
+                        // --- Aquí mostramos los puntos en tiempo real ---
+                        if (_userId != null)
+                          StreamBuilder<DocumentSnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collection('estudiantes')
+                                .doc(_userId)
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const PuntoCard(puntos: 0);
+                              }
+                              if (!snapshot.hasData || !snapshot.data!.exists) {
+                                return const PuntoCard(puntos: 0);
+                              }
+                              final data = snapshot.data!.data() as Map<String, dynamic>;
+                              final puntos = (data['puntos'] as num?)?.toInt() ?? 0;
+                              return PuntoCard(puntos: puntos);
+                            },
+                          )
+                        else
+                          const PuntoCard(puntos: 0),
                         const SizedBox(height: 18),
                       ],
                     ),
