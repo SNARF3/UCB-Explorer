@@ -72,15 +72,16 @@ class _CrearQRSimpleScreenState extends State<CrearQRSimpleScreen> {
 
       final url = supabase.storage.from('basedispos').getPublicUrl(fileName);
 
-      // Guardar en base de datos
-      await supabase.from('qr_images').insert({
+      // Guardar en base de datos en tabla 'qr_data'
+      await supabase.from('qr_data').insert({
         'descripcion': descripcion,
-        'contenido': contenido,
+        'qr': contenido,
         'url': url,
+        'creado_en': DateTime.now().toIso8601String(),
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Subido a Supabase correctamente')),
+        const SnackBar(content: Text('✅ Subido correctamente a Supabase')),
       );
 
       _descripcionController.clear();
