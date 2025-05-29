@@ -6,7 +6,6 @@ class AdminDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -45,10 +44,7 @@ class AdminDashboardScreen extends StatelessWidget {
             const SizedBox(height: 8),
             const Text(
               'Gestiona todos los aspectos de la aplicación desde aquí.',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.grey, fontSize: 16),
             ),
             const SizedBox(height: 24),
             GridView(
@@ -85,6 +81,18 @@ class AdminDashboardScreen extends StatelessWidget {
                   label: 'Banco de Códigos QR',
                   route: '/admin-ver-qr',
                 ),
+                _buildAdminButton(
+                  context,
+                  icon: Icons.card_giftcard_outlined,
+                  label: 'Crear Premio',
+                  route: '/admin-crear-premio',
+                ),
+                _buildAdminButton(
+                  context,
+                  icon: Icons.inventory_2_outlined,
+                  label: 'Banco de Premios',
+                  route: '/admin-banco-premios',
+                ),
               ],
             ),
           ],
@@ -101,9 +109,7 @@ class AdminDashboardScreen extends StatelessWidget {
   }) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => Navigator.pushNamed(context, route),
@@ -138,7 +144,6 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-
   Widget _buildQuickActionItem(
     BuildContext context, {
     required IconData icon,
@@ -156,10 +161,7 @@ class AdminDashboardScreen extends StatelessWidget {
             const SizedBox(width: 16),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             const Spacer(),
             const Icon(Icons.chevron_right, color: Colors.grey),
