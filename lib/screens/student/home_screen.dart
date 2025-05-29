@@ -12,7 +12,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   bool _isChatOpen = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -40,10 +41,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutQuad,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutQuad),
+    );
 
     _animationController.forward();
 
@@ -80,49 +80,60 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Deja tu feedback'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: _feedbackController,
-            maxLines: 5,
-            maxLength: 500,
-            decoration: const InputDecoration(
-              hintText: 'Escribe tu experiencia y qué podría mejorar la UCB...',
-              border: OutlineInputBorder(),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Deja tu feedback'),
+            content: Form(
+              key: formKey,
+              child: TextFormField(
+                controller: _feedbackController,
+                maxLines: 5,
+                maxLength: 500,
+                decoration: const InputDecoration(
+                  hintText:
+                      'Escribe tu experiencia y qué podría mejorar la UCB...',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Por favor, escribe tu feedback';
+                  }
+                  return null;
+                },
+              ),
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Por favor, escribe tu feedback';
-              }
-              return null;
-            },
+            actions: [
+              TextButton(
+                child: const Text('Cancelar'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF004077),
+                ),
+                child: const Text(
+                  'Enviar',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onPressed: () async {
+                  if (formKey.currentState!.validate()) {
+                    await FirebaseFirestore.instance
+                        .collection('feedback')
+                        .add({
+                          'mensaje': _feedbackController.text.trim(),
+                          'fecha': FieldValue.serverTimestamp(),
+                        });
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('¡Gracias por tu feedback!'),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            child: const Text('Cancelar'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004077)),
-            child: const Text('Enviar', style: TextStyle(color: Colors.white)),
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                await FirebaseFirestore.instance.collection('feedback').add({
-                  'mensaje': _feedbackController.text.trim(),
-                  'fecha': FieldValue.serverTimestamp(),
-                });
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('¡Gracias por tu feedback!')),
-                );
-              }
-            },
-          ),
-        ],
-      ),
     );
   }
 
@@ -189,19 +200,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         // --- Aquí mostramos los puntos en tiempo real ---
                         if (_userId != null)
                           StreamBuilder<DocumentSnapshot>(
-                            stream: FirebaseFirestore.instance
-                                .collection('estudiantes')
-                                .doc(_userId)
-                                .snapshots(),
+                            stream:
+                                FirebaseFirestore.instance
+                                    .collection('estudiantes')
+                                    .doc(_userId)
+                                    .snapshots(),
                             builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
                                 return const PuntoCard(puntos: 0);
                               }
                               if (!snapshot.hasData || !snapshot.data!.exists) {
                                 return const PuntoCard(puntos: 0);
                               }
-                              final data = snapshot.data!.data() as Map<String, dynamic>;
-                              final puntos = (data['puntos'] as num?)?.toInt() ?? 0;
+                              final data =
+                                  snapshot.data!.data() as Map<String, dynamic>;
+                              final puntos =
+                                  (data['puntos'] as num?)?.toInt() ?? 0;
                               return PuntoCard(puntos: puntos);
                             },
                           )
@@ -212,16 +227,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: GridView(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 20,
-                        crossAxisSpacing: 20,
-                        childAspectRatio: 1.05,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 20,
+                            crossAxisSpacing: 20,
+                            childAspectRatio: 1.05,
+                          ),
                       children: [
                         CustomButton(
                           icon: Icons.qr_code_scanner,
@@ -251,7 +270,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 80,
+                      vertical: 12,
+                    ),
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -285,9 +307,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             GestureDetector(
               onTap: () => setState(() => _isChatOpen = false),
               behavior: HitTestBehavior.opaque,
-              child: Container(
-                color: Colors.black.withOpacity(0.3),
-              ),
+              child: Container(color: Colors.black.withOpacity(0.3)),
             ),
             Positioned(
               right: 16,
@@ -315,7 +335,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               child: FloatingActionButton(
                 backgroundColor: Colors.white,
                 onPressed: () => setState(() => _isChatOpen = true),
-                child: const Icon(Icons.chat, color: Color(0xFF004077), size: 30),
+                child: const Icon(
+                  Icons.chat,
+                  color: Color(0xFF004077),
+                  size: 30,
+                ),
               ),
             ),
           ],
