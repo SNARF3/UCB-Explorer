@@ -1,10 +1,7 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 class GeminiService {
-  // ¡IMPORTANTE! Reemplaza 'TU_API_KEY_REAL' con tu API Key actual de Google Gemini.
-  // Recuerda que hardcodearla no es lo más seguro para producción.
-  static const String _apiKey = 'AIzaSyBZUUal0DLkceJwScxBWdW8vLWE1ldiuoQ'; 
-  
+  static const String _apiKey = 'AIzaSyBZUUal0DLkceJwScxBWdW8vLWE1ldiuoQ';
   static const String _modelName = 'gemini-1.5-flash';
 
   late final GenerativeModel _model;
@@ -36,18 +33,32 @@ class GeminiService {
         SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.high),
       ];
 
-  Future<String> getResponse(String prompt) async {
+  Future<ChatResponse> getResponse(String prompt) async {
     try {
-      // --- MODIFICACIÓN CLAVE AQUÍ ---
-      // Prepara el prompt con las instrucciones de contexto y idioma
       final String formattedPrompt = '''
-      Habla solo sobre la Universidad Católica Boliviana "San Pablo" (UCB). Debo brindar cualquier tipo de informacion, sobre sus carreras, todo, pued buscar en internet y asi proporcionar datos reales y actualizados, tambien debo usar emojis y hablar al usuario de la manera mas amable posible.
-
+      Eres un asistente de la Universidad Católica Boliviana "San Pablo" (UCB). 
+      Debes proporcionar información precisa y actualizada sobre:
+      - Carreras, facultades, programas académicos
+      - Admisiones, requisitos, fechas importantes
+      - Eventos, noticias universitarias
+      - Instalaciones, servicios estudiantiles
+      
+      Reglas importantes:
+      1. SIEMPRE verifica información crítica con fuentes oficiales
+      2. Usa emojis relevantes para hacer la conversación amigable
+      3. Estructura la información en formato Markdown con:
+         - Encabezados claros
+         - Listas con viñetas
+         - Negritas para puntos importantes
+         - Enlaces claramente identificados como [Texto del enlace](URL)
+      4. Proporciona fechas de actualización cuando sea relevante
+      5. Si no tienes información, indica que no estás seguro y sugiere consultar fuentes oficiales y dales el link correspondiente
+      6. Puedes tener acceso a internet para buscar información confiable y actualizada
+      
       Pregunta del usuario: "$prompt"
       ''';
-      // -------------------------------
 
-      final content = Content.text(formattedPrompt); // Envía el prompt formateado
+      final content = Content.text(formattedPrompt);
       final response = await _model.generateContent([content]);
       
       return _processResponse(response);
@@ -56,25 +67,80 @@ class GeminiService {
     }
   }
 
-  String _processResponse(GenerateContentResponse response) {
+  ChatResponse _processResponse(GenerateContentResponse response) {
     if (response.text == null || response.text!.isEmpty) {
-      return 'No recibí una respuesta válida. ¿Podrías reformular tu pregunta?';
+      return ChatResponse(
+        text: 'No recibí una respuesta válida. ¿Podrías reformular tu pregunta?',
+        structuredData: [],
+      );
     }
     
-    return response.text!
-        .replaceAll('**', '')
-        .replaceAll('*', '')
-        .trim();
+    // Procesar enlaces y estructura
+    final text = response.text!;
+    final structuredData = _extractStructuredData(text);
+    
+    return ChatResponse(
+      text: text,
+      structuredData: structuredData,
+    );
   }
 
-  String _handleError(dynamic error) {
-    if (error is Exception) {
-      try {
-        return 'Error de la API: ${error.toString()}';
-      } catch (e) {
-        return 'Error inesperado: ${e.toString()}';
-      }
+  List<StructuredData> _extractStructuredData(String text) {
+    final List<StructuredData> data = [];
+    
+    // Extraer enlaces
+    final linkRegExp = RegExp(r'\[([^\]]+)\]\(([^)]+)\)');
+    final matches = linkRegExp.allMatches(text);
+    
+    for (final match in matches) {
+      data.add(StructuredData(
+        type: 'link',
+        content: match.group(1) ?? '',
+        metadata: {'url': match.group(2) ?? ''},
+      ));
     }
-    return 'Error desconocido: ${error.toString()}';
+    
+    // Extraer información importante (puedes añadir más patrones)
+    final importantInfoRegExp = RegExp(r'\*\*(.+?)\*\*');
+    final infoMatches = importantInfoRegExp.allMatches(text);
+    
+    for (final match in infoMatches) {
+      data.add(StructuredData(
+        type: 'important_info',
+        content: match.group(1) ?? '',
+      ));
+    }
+    
+    return data;
   }
+
+  ChatResponse _handleError(dynamic error) {
+    final errorMsg = error is Exception 
+        ? 'Error de la API: ${error.toString()}' 
+        : 'Error desconocido: ${error.toString()}';
+    
+    return ChatResponse(
+      text: errorMsg,
+      structuredData: [],
+    );
+  }
+}
+
+class ChatResponse {
+  final String text;
+  final List<StructuredData> structuredData;
+
+  ChatResponse({required this.text, required this.structuredData});
+}
+
+class StructuredData {
+  final String type; // 'link', 'important_info', etc.
+  final String content;
+  final Map<String, String>? metadata;
+
+  StructuredData({
+    required this.type,
+    required this.content,
+    this.metadata,
+  });
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/gemini_service.dart';
 
 class ChatWidget extends StatefulWidget {
@@ -11,7 +13,7 @@ class ChatWidget extends StatefulWidget {
 }
 
 class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateMixin {
-  final List<Map<String, String>> messages = [];
+  final List<ChatMessage> messages = [];
   final TextEditingController textController = TextEditingController();
   final GeminiService geminiService = GeminiService();
   bool _isLoading = false;
@@ -21,29 +23,24 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-
-    // Inicializar la animación
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
 
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
     // Mensaje de bienvenida
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        messages.add({
-          'text':
-              ' 👋 Hola, ¿cómo estás? 🎓 Bienvenido a UCB Explorer, donde puedes preguntar cualquier cosa sobre la Universidad Católica Boliviana "San Pablo" 😊✨',
-          'sender': 'bot',
-          'time': '${DateTime.now().hour}:${DateTime.now().minute}'
-        });
+        messages.add(ChatMessage(
+          text: '👋 Hola, ¿cómo estás? 🎓 Bienvenido a UCB Explorer, donde puedes preguntar cualquier cosa sobre la Universidad Católica Boliviana "San Pablo" 😊✨',
+          sender: 'bot',
+          time: '${DateTime.now().hour}:${DateTime.now().minute}',
+          structuredData: [],
+        ));
       });
     });
   }
@@ -56,11 +53,12 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
 
   Future<void> _handleMessage(String message) async {
     setState(() {
-      messages.add({
-        'text': message,
-        'sender': 'user',
-        'time': '${DateTime.now().hour}:${DateTime.now().minute}'
-      });
+      messages.add(ChatMessage(
+        text: message,
+        sender: 'user',
+        time: '${DateTime.now().hour}:${DateTime.now().minute}',
+        structuredData: [],
+      ));
       _isLoading = true;
     });
 
@@ -68,28 +66,47 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
       final response = await geminiService.getResponse(message);
 
       setState(() {
-        messages.add({
-          'text': response,
-          'sender': 'bot',
-          'time': '${DateTime.now().hour}:${DateTime.now().minute}'
-        });
+        messages.add(ChatMessage(
+          text: response.text,
+          sender: 'bot',
+          time: '${DateTime.now().hour}:${DateTime.now().minute}',
+          structuredData: response.structuredData,
+        ));
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        messages.add({
-          'text': 'Error al obtener respuesta: $e',
-          'sender': 'bot',
-          'time': '${DateTime.now().hour}:${DateTime.now().minute}'
-        });
+        messages.add(ChatMessage(
+          text: 'Error al obtener respuesta: $e',
+          sender: 'bot',
+          time: '${DateTime.now().hour}:${DateTime.now().minute}',
+          structuredData: [],
+        ));
         _isLoading = false;
       });
     }
   }
 
   void _handleClose() async {
-    await _animationController.forward(); // Ejecuta la animación de escala
-    widget.onClose(); // Luego cierra el chat
+    await _animationController.forward();
+    widget.onClose();
+  }
+
+  Future<void> _launchUrl(String url) async {
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo abrir el enlace: $url')),
+      );
+    }
+  }
+
+  Future<void> _copyToClipboard(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Texto copiado al portapapeles')),
+    );
   }
 
   @override
@@ -98,14 +115,14 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
       scale: _scaleAnimation,
       child: Column(
         children: [
+          // Header (igual que antes)
           Container(
-            padding: const EdgeInsets.all(35),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.blue,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
+                topRight: Radius.circular(16)),
               gradient: LinearGradient(
                 colors: [Colors.blue.shade700, Colors.blue.shade400],
                 begin: Alignment.topLeft,
@@ -125,13 +142,9 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
                   ),
                 ),
                 const Spacer(),
-                CircleAvatar(
-                  backgroundColor: const Color(0xFF003366), // Azul oscuro
-                  radius: 20, // Tamaño del círculo
-                  child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white), // Ícono blanco
-                    onPressed: _handleClose,
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: _handleClose,
                 ),
               ],
             ),
@@ -140,76 +153,126 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
             child: Stack(
               children: [
                 ListView.builder(
-                  padding: const EdgeInsets.all(25),
+                  padding: const EdgeInsets.all(16),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final message = messages[index];
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Align(
-                        alignment: message['sender'] == 'user'
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: message['sender'] == 'user'
-                                ? Colors.blue.shade600
-                                : Colors.yellow.shade600,
-                            borderRadius: BorderRadius.only(
-                              topLeft: const Radius.circular(12),
-                              topRight: const Radius.circular(12),
-                              bottomLeft: message['sender'] == 'user'
-                                  ? const Radius.circular(12)
-                                  : Radius.zero,
-                              bottomRight: message['sender'] == 'user'
-                                  ? Radius.zero
-                                  : const Radius.circular(12),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: message.sender == 'user'
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: message.sender == 'user'
+                                  ? Colors.blue.shade600
+                                  : Colors.yellow.shade600,
+                              borderRadius: BorderRadius.only(
+                                topLeft: const Radius.circular(12),
+                                topRight: const Radius.circular(12),
+                                bottomLeft: message.sender == 'user'
+                                    ? const Radius.circular(12)
+                                    : Radius.zero,
+                                bottomRight: message.sender == 'user'
+                                    ? Radius.zero
+                                    : const Radius.circular(12),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: message['sender'] == 'user'
-                                ? CrossAxisAlignment.end
-                                : CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                message['text']!,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18, // Aumenta el tamaño de la fuente
+                            child: Column(
+                              crossAxisAlignment: message.sender == 'user'
+                                  ? CrossAxisAlignment.end
+                                  : CrossAxisAlignment.start,
+                              children: [
+                                SelectableText(
+                                  message.text,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                message['time']!,
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.7),
-                                  fontSize: 12, // Puedes ajustar este tamaño también si es necesario
+                                if (message.structuredData.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  ...message.structuredData.map((data) {
+                                    if (data.type == 'link') {
+                                      return InkWell(
+                                        onTap: () => _launchUrl(data.metadata!['url']!),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                          margin: const EdgeInsets.only(bottom: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.link, 
+                                                color: Colors.white, size: 16),
+                                              const SizedBox(width: 4),
+                                              Text(data.content,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  decoration: TextDecoration.underline,
+                                                )),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      return GestureDetector(
+                                        onLongPress: () => _copyToClipboard(data.content),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                          margin: const EdgeInsets.only(bottom: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(data.content,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            )),
+                                        ),
+                                      );
+                                    }
+                                  }),
+                                ],
+                                const SizedBox(height: 4),
+                                Text(
+                                  message.time,
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.7),
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     );
                   },
                 ),
                 if (_isLoading)
-                  const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  const Center(child: CircularProgressIndicator()),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(8.0).copyWith(bottom: 60), // Ajusta el padding inferior a 50
+            padding: const EdgeInsets.all(8.0).copyWith(bottom: 16),
             child: Row(
               children: [
                 Expanded(
@@ -252,17 +315,14 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
                       ),
                     ],
                   ),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.transparent,
-                    child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white),
-                      onPressed: () async {
-                        if (textController.text.isNotEmpty) {
-                          await _handleMessage(textController.text);
-                          textController.clear();
-                        }
-                      },
-                    ),
+                  child: IconButton(
+                    icon: const Icon(Icons.send, color: Colors.white),
+                    onPressed: () async {
+                      if (textController.text.isNotEmpty) {
+                        await _handleMessage(textController.text);
+                        textController.clear();
+                      }
+                    },
                   ),
                 ),
               ],
@@ -272,4 +332,18 @@ class _ChatWidgetState extends State<ChatWidget> with SingleTickerProviderStateM
       ),
     );
   }
+}
+
+class ChatMessage {
+  final String text;
+  final String sender;
+  final String time;
+  final List<StructuredData> structuredData;
+
+  ChatMessage({
+    required this.text,
+    required this.sender,
+    required this.time,
+    required this.structuredData,
+  });
 }
