@@ -20,7 +20,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  final prefs = await SharedPreferences.getInstance();
+  final prefs =await SharedPreferences.getInstance();
   final userId = prefs.getString('userId');
 
   runApp(MainApp(initialRoute: userId == null ? '/register' : '/home'));
