@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
 import 'qr_scanner_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TriviaScreen extends StatefulWidget {
   const TriviaScreen({super.key});
@@ -25,18 +26,50 @@ class _TriviaScreenState extends State<TriviaScreen> {
   }
 
   Future<void> _cargarPreguntas() async {
-    final snapshot = await FirebaseFirestore.instance.collection('preguntas').get();
-    final preguntas = snapshot.docs.map((doc) {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    if (userId == null) return;
+
+    // 1. Obtener preguntas respondidas del usuario en Firestore
+    final userRef = FirebaseFirestore.instance.collection('estudiantes').doc(userId);
+    final userSnapshot = await userRef.get();
+    final respondidas = Map<String, dynamic>.from(userSnapshot.data()?['preguntasRespondidas'] ?? {});
+
+    // 2. Obtener IDs de preguntas seleccionadas de SharedPreferences
+    List<String> preguntasSeleccionadas = prefs.getStringList('preguntasSeleccionadas_$userId') ?? [];
+
+    // 3. Si no hay preguntas seleccionadas, elegir 20 al azar y guardar
+    if (preguntasSeleccionadas.isEmpty) {
+      final snapshot = await FirebaseFirestore.instance.collection('preguntas').get();
+      final todasLasPreguntas = snapshot.docs.map((doc) => doc.id).toList();
+      todasLasPreguntas.shuffle(Random());
+      preguntasSeleccionadas = todasLasPreguntas.take(20).toList();
+      await prefs.setStringList('preguntasSeleccionadas_$userId', preguntasSeleccionadas);
+    }
+
+    // 4. Cargar los datos de esas preguntas
+    final preguntasDocs = await FirebaseFirestore.instance
+        .collection('preguntas')
+        .where(FieldPath.documentId, whereIn: preguntasSeleccionadas)
+        .get();
+
+    final preguntas = preguntasDocs.docs.map((doc) {
       final data = doc.data();
+      final id = doc.id;
       return {
         ...data,
-        'respondida': false,
+        'id': id,
+        'respondida': respondidas.containsKey(id),
+        'opcionSeleccionada': respondidas[id], // Puede ser null si no respondida
       };
     }).toList();
 
-    preguntas.shuffle(Random());
+    // 5. Mantener el orden original de las seleccionadas
+    preguntas.sort((a, b) =>
+        preguntasSeleccionadas.indexOf(a['id']) - preguntasSeleccionadas.indexOf(b['id']));
+
     setState(() {
-      _preguntas = preguntas.take(20).toList();
+      _preguntas = preguntas;
       _cargando = false;
     });
   }
@@ -50,8 +83,11 @@ class _TriviaScreenState extends State<TriviaScreen> {
     if (resultado != null && resultado == pregunta['lugar']) {
       setState(() {
         pregunta['respondida'] = true;
+        pregunta['opcionSeleccionada'] = resultado;
         _puntosTotales += (pregunta['puntos'] as num).toInt();
       });
+      await _registrarRespuestaUsuario(pregunta['id'], resultado);
+      await _sumarPuntosUsuario((pregunta['puntos'] as num).toInt());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('¡Correcto! Ganaste ${pregunta['puntos']} puntos'),
@@ -59,6 +95,36 @@ class _TriviaScreenState extends State<TriviaScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _sumarPuntosUsuario(int puntos) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    if (userId == null) return;
+
+    final userRef = FirebaseFirestore.instance.collection('estudiantes').doc(userId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(userRef);
+      final currentPuntos = (snapshot.data()?['puntos'] ?? 0) as int;
+      transaction.update(userRef, {'puntos': currentPuntos + puntos});
+    });
+  }
+
+  Future<void> _registrarRespuestaUsuario(String preguntaId, String opcionSeleccionada) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    if (userId == null) return;
+
+    final userRef = FirebaseFirestore.instance.collection('estudiantes').doc(userId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(userRef);
+      final data = snapshot.data();
+      final respondidas = Map<String, dynamic>.from(data?['preguntasRespondidas'] ?? {});
+      respondidas[preguntaId] = opcionSeleccionada;
+      transaction.update(userRef, {'preguntasRespondidas': respondidas});
+    });
   }
 
   @override
@@ -115,7 +181,9 @@ class _TriviaScreenState extends State<TriviaScreen> {
                     const SizedBox(height: 10),
                     if (tipo == 'multiple')
                       ...List<Widget>.from(opciones.map((opcion) {
-                        final seleccionada = _opcionSeleccionada[index] == opcion;
+                        final seleccionada = pregunta['respondida']
+                            ? pregunta['opcionSeleccionada'] == opcion
+                            : _opcionSeleccionada[index] == opcion;
                         final esCorrecta = opcion == respuesta;
                         Color colorBoton = const Color(0xFF004077);
 
@@ -136,15 +204,20 @@ class _TriviaScreenState extends State<TriviaScreen> {
                               backgroundColor: colorBoton,
                               minimumSize: const Size(double.infinity, 40),
                             ),
-                            onPressed: () {
+                            onPressed: () async {
                               if (!pregunta['respondida']) {
                                 setState(() {
                                   _opcionSeleccionada[index] = opcion;
                                   pregunta['respondida'] = true;
+                                  pregunta['opcionSeleccionada'] = opcion;
                                   if (opcion == respuesta) {
                                     _puntosTotales += puntos;
                                   }
                                 });
+                                await _registrarRespuestaUsuario(pregunta['id'], opcion);
+                                if (opcion == respuesta) {
+                                  await _sumarPuntosUsuario(puntos);
+                                }
                               }
                             },
                             child: Text(
@@ -179,7 +252,12 @@ class _TriviaScreenState extends State<TriviaScreen> {
                             ),
                             onPressed: pregunta['respondida']
                                 ? null
-                                : () => _escanearQR(pregunta),
+                                : () async {
+                                    await _escanearQR(pregunta);
+                                    if (pregunta['respondida']) {
+                                      await _sumarPuntosUsuario((pregunta['puntos'] as num).toInt());
+                                    }
+                                  },
                           ),
                         ],
                       ),
@@ -187,11 +265,11 @@ class _TriviaScreenState extends State<TriviaScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
-                          _opcionSeleccionada[index] == respuesta
+                          pregunta['opcionSeleccionada'] == respuesta
                               ? '+$puntos puntos obtenidos'
                               : 'Respuesta incorrecta',
                           style: TextStyle(
-                            color: _opcionSeleccionada[index] == respuesta
+                            color: pregunta['opcionSeleccionada'] == respuesta
                                 ? Colors.green
                                 : Colors.red,
                             fontWeight: FontWeight.bold,
