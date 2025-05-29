@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -26,6 +26,7 @@ class _BancoPremiosScreenState extends State<BancoPremiosScreen> {
         .from('premios')
         .select()
         .order('fecha_creacion', ascending: false);
+
     setState(() {
       premios = data;
       cargando = false;
@@ -41,7 +42,7 @@ class _BancoPremiosScreenState extends State<BancoPremiosScreen> {
       text: premio['puntos'].toString(),
     );
     bool activo = premio['activo'];
-    File? nuevaImagen;
+    Uint8List? nuevaImagen;
 
     await showDialog(
       context: context,
@@ -52,6 +53,7 @@ class _BancoPremiosScreenState extends State<BancoPremiosScreen> {
             builder: (context, setDialogState) {
               return SingleChildScrollView(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: tituloController,
@@ -87,13 +89,18 @@ class _BancoPremiosScreenState extends State<BancoPremiosScreen> {
                           source: ImageSource.gallery,
                         );
                         if (pickedFile != null) {
-                          nuevaImagen = File(pickedFile.path);
-                          setDialogState(() {});
+                          final bytes = await pickedFile.readAsBytes();
+                          setDialogState(() => nuevaImagen = bytes);
                         }
                       },
                       icon: const Icon(Icons.image),
                       label: const Text('Actualizar Imagen (opcional)'),
                     ),
+                    if (nuevaImagen != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Image.memory(nuevaImagen!, height: 120),
+                      ),
                   ],
                 ),
               );
@@ -115,13 +122,12 @@ class _BancoPremiosScreenState extends State<BancoPremiosScreen> {
 
                 if (nuevaImagen != null) {
                   final path = 'premios/${premio['id']}.jpg';
-                  final bytes = await nuevaImagen!.readAsBytes();
                   final storage = Supabase.instance.client.storage.from(
                     'premios',
                   );
                   await storage.uploadBinary(
                     path,
-                    bytes,
+                    nuevaImagen!,
                     fileOptions: const FileOptions(upsert: true),
                   );
                   final newUrl = storage.getPublicUrl(path);
@@ -132,6 +138,7 @@ class _BancoPremiosScreenState extends State<BancoPremiosScreen> {
                     .from('premios')
                     .update(updatedData)
                     .eq('id', premio['id']);
+
                 if (mounted) {
                   Navigator.pop(context);
                   _cargarPremios();

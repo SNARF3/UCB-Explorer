@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class CrearPremioScreen extends StatefulWidget {
   const CrearPremioScreen({super.key});
@@ -16,15 +18,19 @@ class _CrearPremioScreenState extends State<CrearPremioScreen> {
   final _tituloController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _puntosController = TextEditingController();
-  File? _imagen;
+  Uint8List? _imagenBytes;
+  File? _imagenArchivo;
   bool _subiendo = false;
 
   Future<void> _seleccionarImagen() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
     if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
       setState(() {
-        _imagen = File(pickedFile.path);
+        _imagenBytes = bytes;
+        _imagenArchivo = File(pickedFile.path);
       });
     }
   }
@@ -34,7 +40,7 @@ class _CrearPremioScreenState extends State<CrearPremioScreen> {
     final descripcion = _descripcionController.text.trim();
     final puntos = int.tryParse(_puntosController.text.trim()) ?? -1;
 
-    if (titulo.isEmpty || puntos < 0 || _imagen == null) {
+    if (titulo.isEmpty || puntos < 0 || _imagenBytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Completa todos los campos correctamente'),
@@ -49,12 +55,10 @@ class _CrearPremioScreenState extends State<CrearPremioScreen> {
       final uuid = const Uuid().v4();
       final storagePath = 'premios/$uuid.jpg';
 
-      final bytes = await _imagen!.readAsBytes();
       final storage = Supabase.instance.client.storage.from('premios');
-
       await storage.uploadBinary(
         storagePath,
-        bytes,
+        _imagenBytes!,
         fileOptions: const FileOptions(upsert: true),
       );
       final imagenUrl = storage.getPublicUrl(storagePath);
@@ -74,7 +78,10 @@ class _CrearPremioScreenState extends State<CrearPremioScreen> {
       _tituloController.clear();
       _descripcionController.clear();
       _puntosController.clear();
-      setState(() => _imagen = null);
+      setState(() {
+        _imagenBytes = null;
+        _imagenArchivo = null;
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -118,9 +125,9 @@ class _CrearPremioScreenState extends State<CrearPremioScreen> {
               icon: const Icon(Icons.image),
               label: const Text('Seleccionar Imagen'),
             ),
-            if (_imagen != null) ...[
+            if (_imagenBytes != null) ...[
               const SizedBox(height: 12),
-              Image.file(_imagen!, height: 150),
+              Image.memory(_imagenBytes!, height: 150),
             ],
             const SizedBox(height: 24),
             _subiendo
