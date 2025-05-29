@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -26,7 +25,6 @@ class _BancoPremiosScreenState extends State<BancoPremiosScreen> {
         .from('premios')
         .select()
         .order('fecha_creacion', ascending: false);
-
     setState(() {
       premios = data;
       cargando = false;
@@ -113,35 +111,45 @@ class _BancoPremiosScreenState extends State<BancoPremiosScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final updatedData = {
-                  'titulo': tituloController.text.trim(),
-                  'descripcion': descripcionController.text.trim(),
-                  'puntos': int.tryParse(puntosController.text.trim()) ?? 0,
-                  'activo': activo,
-                };
+                try {
+                  final updatedData = {
+                    'titulo': tituloController.text.trim(),
+                    'descripcion': descripcionController.text.trim(),
+                    'puntos': int.tryParse(puntosController.text.trim()) ?? 0,
+                    'activo': activo,
+                  };
 
-                if (nuevaImagen != null) {
-                  final path = 'premios/${premio['id']}.jpg';
-                  final storage = Supabase.instance.client.storage.from(
-                    'premios',
-                  );
-                  await storage.uploadBinary(
-                    path,
-                    nuevaImagen!,
-                    fileOptions: const FileOptions(upsert: true),
-                  );
-                  final newUrl = storage.getPublicUrl(path);
-                  updatedData['imagen_url'] = newUrl;
-                }
+                  if (nuevaImagen != null) {
+                    final path = 'premios/${premio['id']}.jpg';
+                    final storage = Supabase.instance.client.storage.from(
+                      'premios',
+                    );
+                    await storage.uploadBinary(
+                      path,
+                      nuevaImagen!,
+                      fileOptions: const FileOptions(upsert: true),
+                    );
+                    final newUrl = storage.getPublicUrl(path);
+                    updatedData['imagen_url'] = newUrl;
+                  }
 
-                await Supabase.instance.client
-                    .from('premios')
-                    .update(updatedData)
-                    .eq('id', premio['id']);
+                  await Supabase.instance.client
+                      .from('premios')
+                      .update(updatedData)
+                      .eq('id', premio['id']);
 
-                if (mounted) {
-                  Navigator.pop(context);
-                  _cargarPremios();
+                  if (mounted) {
+                    Navigator.pop(context);
+                    _cargarPremios();
+                  }
+                } catch (e, s) {
+                  debugPrint('❌ Error al guardar premio: $e');
+                  debugPrint('Stack: $s');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al guardar: $e')),
+                    );
+                  }
                 }
               },
               child: const Text('Guardar'),
