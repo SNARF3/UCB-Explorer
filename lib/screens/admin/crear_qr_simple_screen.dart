@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CrearQRSimpleScreen extends StatefulWidget {
   const CrearQRSimpleScreen({super.key});
@@ -39,41 +41,57 @@ class _CrearQRSimpleScreenState extends State<CrearQRSimpleScreen> {
     }
   }
 
-  Future<void> _descargarQR() async {
+  Future<void> _subirASupabase() async {
+    final descripcion = _descripcionController.text.trim();
+    final contenido = _qrGenerado;
+
+    if (descripcion.isEmpty || contenido == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Completa todos los campos')),
+      );
+      return;
+    }
+
     final bytes = await _capturarQRBytes();
     if (bytes == null) return;
 
     try {
-      Directory? downloadsDir;
+      final fileName = 'qr_${DateTime.now().millisecondsSinceEpoch}.png';
 
-      if (Platform.isAndroid) {
-        // Para Android, usa el directorio de descargas
-        downloadsDir = Directory('/storage/emulated/0/Download');
-        if (!(await downloadsDir.exists())) {
-          downloadsDir = await getExternalStorageDirectory();
-        }
-      } else if (Platform.isIOS) {
-        downloadsDir = await getApplicationDocumentsDirectory();
-      } else {
-        downloadsDir = await getDownloadsDirectory();
-      }
+      // Subir a Supabase Storage
+      final supabase = Supabase.instance.client;
+      final response = await supabase.storage
+          .from('basedispos')
+          .uploadBinary(
+            fileName,
+            bytes,
+            fileOptions: const FileOptions(contentType: 'image/png'),
+          );
 
-      if (downloadsDir == null || !(await downloadsDir.exists())) {
-        throw Exception('Directorio de descargas no encontrado');
-      }
+      if (response.isEmpty) throw Exception('Error subiendo imagen');
 
-      final file = File('${downloadsDir.path}/qr_${DateTime.now().millisecondsSinceEpoch}.png');
-      await file.writeAsBytes(bytes);
+      final url = supabase.storage.from('basedispos').getPublicUrl(fileName);
 
-      print('✅ QR guardado en: ${file.path}');
+      // Guardar en base de datos en tabla 'qr_data'
+      await supabase.from('qr_data').insert({
+        'descripcion': descripcion,
+        'qr': contenido,
+        'url': url,
+        'creado_en': DateTime.now().toIso8601String(),
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('📁 QR guardado en: ${file.path}')),
+        const SnackBar(content: Text('✅ Subido correctamente a Supabase')),
       );
+
+      _descripcionController.clear();
+      _contenidoQRController.clear();
+      setState(() => _qrGenerado = null);
     } catch (e) {
-      print('❌ Error al guardar QR: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Error al guardar: ${e.toString()}')),
-      );
+      print('❌ Error Supabase: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('❌ Error: $e')));
     }
   }
 
@@ -139,11 +157,14 @@ class _CrearQRSimpleScreenState extends State<CrearQRSimpleScreen> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
-                    onPressed: _descargarQR,
-                    icon: const Icon(Icons.download, color: Color(0xFF004077)),
-                    label: const Text('Descargar QR'),
+                    onPressed: _subirASupabase,
+                    icon: const Icon(
+                      Icons.cloud_upload,
+                      color: Color(0xFF004077),
+                    ),
+                    label: const Text('Subir a Supabase'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFFFD700),
+                      backgroundColor: const Color(0xFFFFD700),
                     ),
                   ),
                 ],
