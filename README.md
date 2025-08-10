@@ -15,7 +15,7 @@
 ## 🚀 **Run the App**  
 ### **1. Clone the Repository**  
 ```bash
-git clone https://github.com/your-username/your-repo.git
+git clone https://github.com/SNARF3/UCB-Explorer
 cd (Direction)
 ```
 
@@ -51,10 +51,6 @@ flutter pub get
 ---
 
 ## ⚠️ **Troubleshooting**  
-- **Emulator Issues**:  
-  ```bash
-  flutter emulators --launch Pixel_5_API_33
-  ```
 - **Missing Dependencies**:  
   ```bash
   flutter doctor --android-licenses
