@@ -16,7 +16,7 @@
 ### **1. Clone the Repository**  
 ```bash
 git clone https://github.com/SNARF3/UCB-Explorer
-cd (Direction)
+cd (Direction UCB-explorer)
 ```
 
 ### **2. Install Dependencies (Important!)**  
