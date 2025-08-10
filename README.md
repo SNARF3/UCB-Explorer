@@ -24,7 +24,7 @@ cd (Direction)
 flutter pub get
 ```
 
-### **3. Run on Device/Emulator**  
+### **3. Run on Device/Emulator or just select the device if you use Visual Studio Code**  
 - **Android**:  
   ```bash
   flutter run -d android  # or use device ID
