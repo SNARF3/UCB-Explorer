@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _showFeedbackDialog() async {
-    final TextEditingController _feedbackController = TextEditingController();
+    final TextEditingController feedbackController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
     await showDialog(
@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen>
             content: Form(
               key: formKey,
               child: TextFormField(
-                controller: _feedbackController,
+                controller: feedbackController,
                 maxLines: 5,
                 maxLength: 500,
                 decoration: const InputDecoration(
@@ -120,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen>
                     await FirebaseFirestore.instance
                         .collection('feedback')
                         .add({
-                          'mensaje': _feedbackController.text.trim(),
+                          'mensaje': feedbackController.text.trim(),
                           'fecha': FieldValue.serverTimestamp(),
                         });
                     Navigator.of(context).pop();

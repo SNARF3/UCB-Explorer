@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // <-- Agrega esto
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../screens/student/home_screen.dart';
 import '../screens/student/qr_scanner_screen.dart';

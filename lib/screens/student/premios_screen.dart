@@ -98,7 +98,7 @@ class _PremiosScreenState extends State<PremiosScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Premios (${puntosUsuario} pts)',
+          'Premios ($puntosUsuario pts)',
           style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF004077),

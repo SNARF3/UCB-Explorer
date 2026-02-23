@@ -381,7 +381,7 @@ class _RegisterScreenState extends State<RegisterScreen>
             'Seleccione su colegio',
             style: TextStyle(color: Colors.white70),
           ),
-          value: _selectedColegio,
+          initialValue: _selectedColegio,
           items: _colegios.map((String value) {
             return DropdownMenuItem<String>(
               value: value,
@@ -438,7 +438,7 @@ class _RegisterScreenState extends State<RegisterScreen>
             'Seleccione su carrera de interés',
             style: TextStyle(color: Colors.white70),
           ),
-          value: _selectedCarrera,
+          initialValue: _selectedCarrera,
           items: _carreras.map((String value) {
             return DropdownMenuItem<String>(
               value: value,

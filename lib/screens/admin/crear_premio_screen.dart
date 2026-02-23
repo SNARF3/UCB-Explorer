@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class CrearPremioScreen extends StatefulWidget {
   const CrearPremioScreen({super.key});
